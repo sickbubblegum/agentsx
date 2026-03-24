@@ -5,6 +5,7 @@ import os
 import requests
 from pypdf import PdfReader
 import gradio as gr
+import time
 
 
 load_dotenv(override=True)
@@ -22,10 +23,12 @@ def push(text):
 
 def record_user_details(email, name="Name not provided", notes="not provided"):
     push(f"Recording {name} with email {email} and notes {notes}")
+    time.sleep(2.5)
     return {"recorded": "ok"}
 
 def record_unknown_question(question):
     push(f"Recording {question}")
+    time.sleep(2.5)
     return {"recorded": "ok"}
 
 record_user_details_json = {
@@ -76,8 +79,8 @@ tools = [{"type": "function", "function": record_user_details_json},
 class Me:
 
     def __init__(self):
-        self.openai = OpenAI()
-        self.name = "Ed Donner"
+        self.openai = OpenAI(api_key=os.getenv('GOOGLE_API_KEY'), base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        self.name = "Roxana"
         reader = PdfReader("me/linkedin.pdf")
         self.linkedin = ""
         for page in reader.pages:
@@ -116,7 +119,7 @@ If the user is engaging in discussion, try to steer them towards getting in touc
         messages = [{"role": "system", "content": self.system_prompt()}] + history + [{"role": "user", "content": message}]
         done = False
         while not done:
-            response = self.openai.chat.completions.create(model="gpt-4o-mini", messages=messages, tools=tools)
+            response = self.openai.chat.completions.create(model="gemini-flash-latest", messages=messages, tools=tools)
             if response.choices[0].finish_reason=="tool_calls":
                 message = response.choices[0].message
                 tool_calls = message.tool_calls
@@ -131,4 +134,4 @@ If the user is engaging in discussion, try to steer them towards getting in touc
 if __name__ == "__main__":
     me = Me()
     gr.ChatInterface(me.chat, type="messages").launch()
-    
+     
